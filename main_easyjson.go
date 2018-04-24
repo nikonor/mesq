@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson89aae3efDecodeMesq(in *jlexer.Lexer, out *THeap) {
+func easyjson89aae3efDecodeMesq(in *jlexer.Lexer, out *TMessage) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -36,22 +36,129 @@ func easyjson89aae3efDecodeMesq(in *jlexer.Lexer, out *THeap) {
 			continue
 		}
 		switch key {
-		case "Dict":
+		case "datetime":
+			out.Datetime = string(in.String())
+		case "id":
+			out.ID = string(in.String())
+		case "systemId":
+			out.SystemID = string(in.String())
+		case "token":
+			out.Token = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson89aae3efEncodeMesq(out *jwriter.Writer, in TMessage) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"datetime\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Datetime))
+	}
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ID))
+	}
+	{
+		const prefix string = ",\"systemId\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.SystemID))
+	}
+	{
+		const prefix string = ",\"token\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Token))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v TMessage) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson89aae3efEncodeMesq(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v TMessage) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson89aae3efEncodeMesq(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *TMessage) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson89aae3efDecodeMesq(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *TMessage) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson89aae3efDecodeMesq(l, v)
+}
+func easyjson89aae3efDecodeMesq1(in *jlexer.Lexer, out *TMesHeap) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "Heap":
 			if in.IsNull() {
 				in.Skip()
 			} else {
 				in.Delim('{')
 				if !in.IsDelim('}') {
-					out.Dict = make(map[string]QMesType)
+					out.Heap = make(map[string]TMessage)
 				} else {
-					out.Dict = nil
+					out.Heap = nil
 				}
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v1 QMesType
+					var v1 TMessage
 					(v1).UnmarshalEasyJSON(in)
-					(out.Dict)[key] = v1
+					(out.Heap)[key] = v1
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -66,24 +173,24 @@ func easyjson89aae3efDecodeMesq(in *jlexer.Lexer, out *THeap) {
 		in.Consumed()
 	}
 }
-func easyjson89aae3efEncodeMesq(out *jwriter.Writer, in THeap) {
+func easyjson89aae3efEncodeMesq1(out *jwriter.Writer, in TMesHeap) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"Dict\":"
+		const prefix string = ",\"Heap\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		if in.Dict == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+		if in.Heap == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
 			v2First := true
-			for v2Name, v2Value := range in.Dict {
+			for v2Name, v2Value := range in.Heap {
 				if v2First {
 					v2First = false
 				} else {
@@ -100,119 +207,29 @@ func easyjson89aae3efEncodeMesq(out *jwriter.Writer, in THeap) {
 }
 
 // MarshalJSON supports json.Marshaler interface
-func (v THeap) MarshalJSON() ([]byte, error) {
-	w := jwriter.Writer{}
-	easyjson89aae3efEncodeMesq(&w, v)
-	return w.Buffer.BuildBytes(), w.Error
-}
-
-// MarshalEasyJSON supports easyjson.Marshaler interface
-func (v THeap) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson89aae3efEncodeMesq(w, v)
-}
-
-// UnmarshalJSON supports json.Unmarshaler interface
-func (v *THeap) UnmarshalJSON(data []byte) error {
-	r := jlexer.Lexer{Data: data}
-	easyjson89aae3efDecodeMesq(&r, v)
-	return r.Error()
-}
-
-// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *THeap) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson89aae3efDecodeMesq(l, v)
-}
-func easyjson89aae3efDecodeMesq1(in *jlexer.Lexer, out *QMesType) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeString()
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "T":
-			if data := in.Raw(); in.Ok() {
-				in.AddError((out.T).UnmarshalJSON(data))
-			}
-		case "Body":
-			if in.IsNull() {
-				in.Skip()
-				out.Body = nil
-			} else {
-				out.Body = in.Bytes()
-			}
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjson89aae3efEncodeMesq1(out *jwriter.Writer, in QMesType) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"T\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Raw((in.T).MarshalJSON())
-	}
-	{
-		const prefix string = ",\"Body\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Base64Bytes(in.Body)
-	}
-	out.RawByte('}')
-}
-
-// MarshalJSON supports json.Marshaler interface
-func (v QMesType) MarshalJSON() ([]byte, error) {
+func (v TMesHeap) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjson89aae3efEncodeMesq1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v QMesType) MarshalEasyJSON(w *jwriter.Writer) {
+func (v TMesHeap) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson89aae3efEncodeMesq1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
-func (v *QMesType) UnmarshalJSON(data []byte) error {
+func (v *TMesHeap) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjson89aae3efDecodeMesq1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *QMesType) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *TMesHeap) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson89aae3efDecodeMesq1(l, v)
 }
-func easyjson89aae3efDecodeMesq2(in *jlexer.Lexer, out *INMes) {
+func easyjson89aae3efDecodeMesq2(in *jlexer.Lexer, out *TEventHeap) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -231,12 +248,26 @@ func easyjson89aae3efDecodeMesq2(in *jlexer.Lexer, out *INMes) {
 			continue
 		}
 		switch key {
-		case "command":
-			out.Command = string(in.String())
-		case "citizen_id":
-			out.CitizenID = int64(in.Int64())
-		case "channel":
-			out.Channel = int64(in.Int64())
+		case "Heap":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Heap = make(map[string]EventType)
+				} else {
+					out.Heap = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v3 EventType
+					(v3).UnmarshalEasyJSON(in)
+					(out.Heap)[key] = v3
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -247,63 +278,59 @@ func easyjson89aae3efDecodeMesq2(in *jlexer.Lexer, out *INMes) {
 		in.Consumed()
 	}
 }
-func easyjson89aae3efEncodeMesq2(out *jwriter.Writer, in INMes) {
+func easyjson89aae3efEncodeMesq2(out *jwriter.Writer, in TEventHeap) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"command\":"
+		const prefix string = ",\"Heap\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		out.String(string(in.Command))
-	}
-	{
-		const prefix string = ",\"citizen_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
+		if in.Heap == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
 		} else {
-			out.RawString(prefix)
+			out.RawByte('{')
+			v4First := true
+			for v4Name, v4Value := range in.Heap {
+				if v4First {
+					v4First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v4Name))
+				out.RawByte(':')
+				(v4Value).MarshalEasyJSON(out)
+			}
+			out.RawByte('}')
 		}
-		out.Int64(int64(in.CitizenID))
-	}
-	{
-		const prefix string = ",\"channel\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Int64(int64(in.Channel))
 	}
 	out.RawByte('}')
 }
 
 // MarshalJSON supports json.Marshaler interface
-func (v INMes) MarshalJSON() ([]byte, error) {
+func (v TEventHeap) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjson89aae3efEncodeMesq2(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v INMes) MarshalEasyJSON(w *jwriter.Writer) {
+func (v TEventHeap) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson89aae3efEncodeMesq2(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
-func (v *INMes) UnmarshalJSON(data []byte) error {
+func (v *TEventHeap) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjson89aae3efDecodeMesq2(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *INMes) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *TEventHeap) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson89aae3efDecodeMesq2(l, v)
 }
