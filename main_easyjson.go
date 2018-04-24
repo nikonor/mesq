@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson89aae3efDecodeMesq(in *jlexer.Lexer, out *THeapElement) {
+func easyjson89aae3efDecodeMesq(in *jlexer.Lexer, out *THeap) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -36,8 +36,26 @@ func easyjson89aae3efDecodeMesq(in *jlexer.Lexer, out *THeapElement) {
 			continue
 		}
 		switch key {
-		case "Mes":
-			(out.Mes).UnmarshalEasyJSON(in)
+		case "Dict":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Dict = make(map[string]QMesType)
+				} else {
+					out.Dict = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v1 QMesType
+					(v1).UnmarshalEasyJSON(in)
+					(out.Dict)[key] = v1
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -48,44 +66,60 @@ func easyjson89aae3efDecodeMesq(in *jlexer.Lexer, out *THeapElement) {
 		in.Consumed()
 	}
 }
-func easyjson89aae3efEncodeMesq(out *jwriter.Writer, in THeapElement) {
+func easyjson89aae3efEncodeMesq(out *jwriter.Writer, in THeap) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"Mes\":"
+		const prefix string = ",\"Dict\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		(in.Mes).MarshalEasyJSON(out)
+		if in.Dict == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v2First := true
+			for v2Name, v2Value := range in.Dict {
+				if v2First {
+					v2First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v2Name))
+				out.RawByte(':')
+				(v2Value).MarshalEasyJSON(out)
+			}
+			out.RawByte('}')
+		}
 	}
 	out.RawByte('}')
 }
 
 // MarshalJSON supports json.Marshaler interface
-func (v THeapElement) MarshalJSON() ([]byte, error) {
+func (v THeap) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjson89aae3efEncodeMesq(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v THeapElement) MarshalEasyJSON(w *jwriter.Writer) {
+func (v THeap) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson89aae3efEncodeMesq(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
-func (v *THeapElement) UnmarshalJSON(data []byte) error {
+func (v *THeap) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjson89aae3efDecodeMesq(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *THeapElement) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *THeap) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson89aae3efDecodeMesq(l, v)
 }
 func easyjson89aae3efDecodeMesq1(in *jlexer.Lexer, out *QMesType) {
@@ -201,29 +235,8 @@ func easyjson89aae3efDecodeMesq2(in *jlexer.Lexer, out *INMes) {
 			out.Command = string(in.String())
 		case "citizen_id":
 			out.CitizenID = int64(in.Int64())
-		case "channels":
-			if in.IsNull() {
-				in.Skip()
-				out.Channels = nil
-			} else {
-				in.Delim('[')
-				if out.Channels == nil {
-					if !in.IsDelim(']') {
-						out.Channels = make([]int64, 0, 8)
-					} else {
-						out.Channels = []int64{}
-					}
-				} else {
-					out.Channels = (out.Channels)[:0]
-				}
-				for !in.IsDelim(']') {
-					var v4 int64
-					v4 = int64(in.Int64())
-					out.Channels = append(out.Channels, v4)
-					in.WantComma()
-				}
-				in.Delim(']')
-			}
+		case "channel":
+			out.Channel = int64(in.Int64())
 		default:
 			in.SkipRecursive()
 		}
@@ -259,25 +272,14 @@ func easyjson89aae3efEncodeMesq2(out *jwriter.Writer, in INMes) {
 		out.Int64(int64(in.CitizenID))
 	}
 	{
-		const prefix string = ",\"channels\":"
+		const prefix string = ",\"channel\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		if in.Channels == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
-			out.RawString("null")
-		} else {
-			out.RawByte('[')
-			for v5, v6 := range in.Channels {
-				if v5 > 0 {
-					out.RawByte(',')
-				}
-				out.Int64(int64(v6))
-			}
-			out.RawByte(']')
-		}
+		out.Int64(int64(in.Channel))
 	}
 	out.RawByte('}')
 }
